@@ -1,7 +1,7 @@
-FROM python3:slim-stretch
+FROM python:3.9
 
 # Install Azure Event Hub PythonSDK Module
-RUN pip install azure-eventhub
+RUN pip install azure-eventhub==1.3.3
 
 # Remove Unneeded PIP Cache after Install
 RUN rm -rf /.cache

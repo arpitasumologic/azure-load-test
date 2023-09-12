@@ -1,14 +1,5 @@
 #!/usr/bin/env python
 
-# --------------------------------------------------------------------------------------------
-# Copyright (c) Microsoft Corporation. All rights reserved.
-# Licensed under the MIT License. See License.txt in the project root for license information.
-# --------------------------------------------------------------------------------------------
-
-"""
-send test
-"""
-
 import argparse
 import time
 import os
@@ -59,30 +50,30 @@ def check_send_successful(outcome, condition):
         print("Send failed {}".format(condition))
 
 
-def main(client, args):
+def main(client, duration, payload, batch):
     sender = client.add_sender()
     client.run()
-    deadline = time.time() + args.duration
+    deadline = time.time() + duration
     total = 0
 
     def data_generator():
-        for i in range(args.batch):
-            rand = ''.join(random.choices(string.ascii_uppercase, k=args.payload))
+        for i in range(batch):
+            rand = ''.join(random.choices(string.ascii_uppercase, k=payload))
             yield getTimestamp() + ' test poc event ' + str(i) + ' ' + str(rand)
 
-    if args.batch > 1:
+    if batch > 1:
         print("Sending batched messages")
     else:
         print("Sending single messages")
 
     try:
         while time.time() < deadline:
-            if args.batch > 1:
+            if batch > 1:
                 data = EventData(batch=data_generator())
             else:
-                data = EventData(body=b"D" * args.payload)
+                data = EventData(body=b"D" * payload)
             sender.transfer(data, callback=check_send_successful)
-            total += args.batch
+            total += batch
             if total % 10000 == 0:
                sender.wait()
                print("Send total {}".format(total))
@@ -93,41 +84,41 @@ def main(client, args):
     print("Sent total {}".format(total))
 
 
-def test_long_running_send(connection_str):
+def test_long_running_send():
     if sys.platform.startswith('darwin'):
         import pytest
         pytest.skip("Skipping on OSX")
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--duration", help="Duration in seconds of the test", type=int, default=30)
-    parser.add_argument("--payload", help="payload size", type=int, default=1024)
-    parser.add_argument("--batch", help="Number of events to send and wait", type=int, default=1)
-    parser.add_argument("--conn-str", help="EventHub connection string", default=connection_str)
-    parser.add_argument("--eventhub", help="Name of EventHub")
-    parser.add_argument("--address", help="Address URI to the EventHub entity")
-    parser.add_argument("--sas-policy", help="Name of the shared access policy to authenticate with")
-    parser.add_argument("--sas-key", help="Shared access key")
-
-    args, _ = parser.parse_known_args()
-    if args.conn_str:
+    duration = os.environ.get('DURATION', 30)
+    payload = os.environ.get('PAYLOAD', 1024)
+    batch = os.environ.get('BATCH', 1)
+    eventhub = os.environ.get('EVENTHUB')
+    conn_str = os.environ.get('EVENT_HUB_CONNECTION_STR', None)
+    address = os.environ.get('ADDRESS', None)
+    sas_policy =  os.environ.get('SAS_POLICY', None)
+    sas_key = os.environ.get('SAS_KEY', None)
+    if conn_str:
         client = EventHubClient.from_connection_string(
-            args.conn_str,
-            eventhub=args.eventhub)
-    elif args.address:
+            conn_str,
+            eventhub=eventhub)
+    elif address:
         client = EventHubClient(
-            args.address,
-            username=args.sas_policy,
-            password=args.sas_key)
+            address,
+            username=sas_policy,
+            password=sas_key)
     else:
         try:
             import pytest
-            pytest.skip("Must specify either '--conn-str' or '--address'")
+            pytest.skip("Must specify either 'EVENT_HUB_CONNECTION_STR' or 'ADDRESS' ENV variable")
         except ImportError:
-            raise ValueError("Must specify either '--conn-str' or '--address'")
+            raise ValueError("Must specify either 'EVENT_HUB_CONNECTION_STR' or 'ADDRESS'")
 
     try:
-        main(client, args)
+        print (f"Duration ={duration}")
+        print(f"Batch ={batch}")
+        print(f"Payload ={payload}")
+        main(client, int(duration), int(payload), int(batch))
     except KeyboardInterrupt:
         pass
 
 if __name__ == '__main__':
-    test_long_running_send(os.environ.get('EVENT_HUB_CONNECTION_STR'))
+    test_long_running_send()
