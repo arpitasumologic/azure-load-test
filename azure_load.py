@@ -62,7 +62,6 @@ async def main(producer, duration, payload, batch, payload_data=None):
         # Close down the producer handler.
         await producer.close()
 
-
 def test_long_running_send():
     duration = os.environ.get('DURATION', 30)
     payload = os.environ.get('PAYLOAD', 1024)
@@ -78,7 +77,7 @@ def test_long_running_send():
     )
 
     payload_data = None
-    if payload_json_size:
+    if payload_json_size and (not payload_json_size.isnumeric()):
         payload_json_url = f'https://microsoftedge.github.io/Demos/json-dummy-data/{payload_json_size}-min.json'
         result = subprocess.run(
             ['wget', '-O', 'payload.json', payload_json_url])
