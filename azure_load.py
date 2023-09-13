@@ -6,6 +6,7 @@ import os
 import sys
 import random
 import string
+import subprocess
 import logging
 from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
@@ -50,7 +51,7 @@ def check_send_successful(outcome, condition):
         print("Send failed {}".format(condition))
 
 
-def main(client, duration, payload, batch):
+def main(client, duration, payload, batch, payload_data=None):
     sender = client.add_sender()
     client.run()
     deadline = time.time() + duration
@@ -58,8 +59,11 @@ def main(client, duration, payload, batch):
 
     def data_generator():
         for i in range(batch):
-            rand = ''.join(random.choices(string.ascii_uppercase, k=payload))
-            yield getTimestamp() + ' test poc event ' + str(i) + ' ' + str(rand)
+            if payload_data:
+                yield payload_data
+            else:
+                rand = ''.join(random.choices(string.ascii_uppercase, k=payload))
+                yield getTimestamp() + ' test poc event ' + str(i) + ' ' + str(rand)
 
     if batch > 1:
         print("Sending batched messages")
@@ -71,7 +75,7 @@ def main(client, duration, payload, batch):
             if batch > 1:
                 data = EventData(batch=data_generator())
             else:
-                data = EventData(body=b"D" * payload)
+                data = payload_data if payload_data else EventData(body=b"D" * payload)
             sender.transfer(data, callback=check_send_successful)
             total += batch
             if total % 10000 == 0:
@@ -90,12 +94,15 @@ def test_long_running_send():
         pytest.skip("Skipping on OSX")
     duration = os.environ.get('DURATION', 30)
     payload = os.environ.get('PAYLOAD', 1024)
+    #json should be one of minified json https://microsoftedge.github.io/Demos/json-dummy-data/
+    payload_json_size = os.environ.get('PAYLOAD_JSON_SIZE', None)
     batch = os.environ.get('BATCH', 1)
     eventhub = os.environ.get('EVENTHUB')
     conn_str = os.environ.get('EVENT_HUB_CONNECTION_STR', None)
     address = os.environ.get('ADDRESS', None)
     sas_policy =  os.environ.get('SAS_POLICY', None)
     sas_key = os.environ.get('SAS_KEY', None)
+
     if conn_str:
         client = EventHubClient.from_connection_string(
             conn_str,
@@ -111,12 +118,23 @@ def test_long_running_send():
             pytest.skip("Must specify either 'EVENT_HUB_CONNECTION_STR' or 'ADDRESS' ENV variable")
         except ImportError:
             raise ValueError("Must specify either 'EVENT_HUB_CONNECTION_STR' or 'ADDRESS'")
-
+    payload_data = None
+    if payload_json_size:
+        payload_json_url = f'https://microsoftedge.github.io/Demos/json-dummy-data/{payload_json_size}-min.json'
+        result = subprocess.run(
+            ['wget', '-O', 'payload.json', 'https://www.webscrapingapi.com/images/logo/logo-white.svg'])
+        with open('payload.json', 'r') as file:
+            payload_data = file.read().rstrip()
     try:
         print (f"Duration ={duration}")
         print(f"Batch ={batch}")
         print(f"Payload ={payload}")
-        main(client, int(duration), int(payload), int(batch))
+        if payload_data:
+            print(f"Payload data ={payload_data}")
+            payload = 0
+        else:
+            print(f"Payload ={payload}")
+        main(client, int(duration), int(payload), int(batch), payload_data)
     except KeyboardInterrupt:
         pass
 
