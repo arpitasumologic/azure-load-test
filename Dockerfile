@@ -6,7 +6,7 @@ RUN  apt-get update \
   && rm -rf /var/lib/apt/lists/*
 
 # Install Azure Event Hub PythonSDK Module
-RUN pip install azure-eventhub==1.3.3 \
+RUN pip install azure-eventhub \
  && rm -rf /.cache \
  && apt-get autoremove -o APT::Autoremove::RecommendsImportant=0 -o APT::Autoremove::SuggestsImportant=0
 

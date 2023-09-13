@@ -8,7 +8,7 @@ import random
 import string
 import subprocess
 import logging
-from datetime import datetime, timezone
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 
 from azure.eventhub.aio import EventHubProducerClient
