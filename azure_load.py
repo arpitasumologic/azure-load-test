@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import argparse
+import asyncio
 import time
 import os
 import sys
@@ -43,7 +43,7 @@ def get_logger(filename, level=logging.INFO):
 
 logger = get_logger("send_test.log", logging.INFO)
 
-def main(producer, duration, payload, batch, payload_data=None):
+async def main(producer, duration, payload, batch, payload_data=None):
     deadline = time.time() + duration
     try:
         while time.time() < deadline:
@@ -92,7 +92,7 @@ def test_long_running_send():
             print(f"Payload data ={payload_data}")
         else:
             print(f"Payload ={payload}")
-        main(producer, int(duration), int(payload), int(batch), payload_data)
+        asyncio.run((producer, int(duration), int(payload), int(batch), payload_data))
     except KeyboardInterrupt:
         pass
 
