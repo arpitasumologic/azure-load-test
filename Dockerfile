@@ -3,7 +3,7 @@ FROM python:3.9
 #install wget
 RUN  apt-get update \
   && apt-get install -y wget \
-  && rm -rf /var/lib/apt/lists/* 
+  && rm -rf /var/lib/apt/lists/*
 
 # Install Azure Event Hub PythonSDK Module
 RUN pip install azure-eventhub==1.3.3 \

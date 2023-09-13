@@ -2,7 +2,7 @@ export EVENT_HUB_CONNECTION_STR="Endpoint=sb://arpitaload1.servicebus.windows.ne
 export EVENTHUB="arpita_loadtest1"
 export DURATION=60
 export PAYLOAD=512
-export BATCH=500
+export BATCH=128
 
 export DOCKER_BUILDKIT=0
 export COMPOSE_DOCKER_CLI_BUILD=0
