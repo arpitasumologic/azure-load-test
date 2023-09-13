@@ -92,7 +92,7 @@ def test_long_running_send():
             print(f"Payload data ={payload_data}")
         else:
             print(f"Payload ={payload}")
-        asyncio.run((producer, int(duration), int(payload), int(batch), payload_data))
+        asyncio.run(main(producer, int(duration), int(payload), int(batch), payload_data))
     except KeyboardInterrupt:
         pass
 
